@@ -1,0 +1,2 @@
+# Intelligent_Urban_Flood_Monitoring
+A real-time intelligent urban flood monitoring and nowcasting system that integrates rainfall forecasts, weather data, rainfall-runoff modelling, and urban drainage network simulations to predict street-level inundation, identify vulnerable areas, generate location-specific early warnings, and support data-driven disaster management and urban infrastructure planning.
