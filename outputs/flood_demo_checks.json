@@ -1,0 +1,169 @@
+{
+  "status": "completed",
+  "pilot_area": {
+    "name": "Synthetic 5-Node Pilot Urban Catchment (Representing Coastal Metros like Mumbai/Chennai)",
+    "total_area_km2": 10.0,
+    "average_imperviousness": 0.77,
+    "nodes_modeled": 5,
+    "conduits_modeled": 4,
+    "critical_sag_hotspot": "Node N4 (Elevation 7.5m, Underpass depression)",
+    "outfall": "Node N5 (Elevation 2.0m, Coastal/Estuary flap-gate)"
+  },
+  "mass_balance_accounting_checks": {
+    "baseline_relative_error": 0.0,
+    "heavy_rain_relative_error": 0.0,
+    "blockage_c4_relative_error": 2.206925532264167e-16,
+    "blockage_c3_relative_error": 2.206925532264167e-16,
+    "compound_relative_error": 1.2611003041509527e-16,
+    "all_scenarios_accounted_within_tolerance": true
+  },
+  "hydraulic_monotonicity_checks": {
+    "heavy_rain_sag_depth_not_lower": true,
+    "heavy_rain_sag_increase_cm": 0.0,
+    "c4_blockage_sag_depth_not_lower": true,
+    "c4_blockage_sag_increase_cm": 0.0,
+    "c3_blockage_n3_depth_not_lower": true,
+    "c3_blockage_n3_increase_cm": 0.0,
+    "coastal_high_tide_sag_depth_not_lower": true,
+    "coastal_high_tide_sag_increase_cm": 0.0,
+    "compound_disaster_produces_highest_sag_depth": true,
+    "compound_disaster_peak_sag_depth_cm": 100.0,
+    "cumulative_surface_burden_monotonicity": {
+      "definition": "maximum over time of cumulative spill plus current surface storage (m3)",
+      "baseline_burden_m3": 326930.93,
+      "heavy_rain_burden_m3": 794154.19,
+      "c4_blockage_burden_m3": 477291.32,
+      "c3_blockage_burden_m3": 371677.24,
+      "high_tide_burden_m3": 369975.0,
+      "compound_burden_m3": 968334.87,
+      "heavy_rain_increases_surface_burden": true,
+      "c4_blockage_increases_surface_burden": true,
+      "c3_blockage_increases_surface_burden": true,
+      "high_tide_increases_surface_burden": true,
+      "compound_disaster_produces_highest_surface_burden": true
+    },
+    "all_monotonicity_checks_passed": true
+  },
+  "scenarios_evaluated": {
+    "baseline": {
+      "description": "Baseline 12h convective storm (peak 28.5 mm/h), 100% capacity, free outfall",
+      "peak_rainfall_mm": 28.5,
+      "peak_flood_depth_sag_cm": 100.0,
+      "depth_cap_m": 1.0,
+      "depth_cap_reached": true,
+      "peak_surface_storage_m3": 145000.0,
+      "final_surface_storage_m3": 0.0,
+      "total_overflow_spill_m3": 192817.3,
+      "depth_interpretation": "Capped synthetic storage-equivalent depth; not a physical street-water prediction.",
+      "hours_high_risk": 7,
+      "relative_mass_error": 0.0,
+      "accounting_check_passed": true
+    },
+    "heavy_rain": {
+      "description": "Extreme rainfall deluge (1.75x baseline, peak 49.9 mm/h), 100% capacity",
+      "peak_rainfall_mm": 49.875,
+      "peak_flood_depth_sag_cm": 100.0,
+      "depth_cap_m": 1.0,
+      "depth_cap_reached": true,
+      "peak_surface_storage_m3": 145000.0,
+      "final_surface_storage_m3": 0.0,
+      "total_overflow_spill_m3": 653334.98,
+      "depth_interpretation": "Capped synthetic storage-equivalent depth; not a physical street-water prediction.",
+      "hours_high_risk": 9,
+      "relative_mass_error": 0.0,
+      "accounting_check_passed": true
+    },
+    "conduit_blockage_c4": {
+      "description": "Baseline rain with 50% silt/debris blockage in trunk conduit C4 draining Sag N4",
+      "peak_rainfall_mm": 28.5,
+      "peak_flood_depth_sag_cm": 100.0,
+      "depth_cap_m": 1.0,
+      "depth_cap_reached": true,
+      "peak_surface_storage_m3": 145000.0,
+      "final_surface_storage_m3": 21946.05,
+      "total_overflow_spill_m3": 369229.49,
+      "depth_interpretation": "Capped synthetic storage-equivalent depth; not a physical street-water prediction.",
+      "hours_high_risk": 10,
+      "relative_mass_error": 2.206925532264167e-16,
+      "accounting_check_passed": true
+    },
+    "conduit_blockage_c3": {
+      "description": "Baseline rain with 50% silt/debris blockage in midstream conduit C3 surcharging at Junction N3",
+      "peak_rainfall_mm": 28.5,
+      "peak_flood_depth_sag_cm": 19.81,
+      "depth_cap_m": 1.0,
+      "depth_cap_reached": false,
+      "peak_surface_storage_m3": 104906.8,
+      "final_surface_storage_m3": 8822.08,
+      "total_overflow_spill_m3": 304289.99,
+      "depth_interpretation": "Capped synthetic storage-equivalent depth; not a physical street-water prediction.",
+      "hours_high_risk": 10,
+      "relative_mass_error": 2.206925532264167e-16,
+      "accounting_check_passed": true
+    },
+    "coastal_high_tide": {
+      "description": "Baseline rain with spring high tide / storm surge restricting Outfall N5 discharge by 60%",
+      "peak_rainfall_mm": 28.5,
+      "peak_flood_depth_sag_cm": 100.0,
+      "depth_cap_m": 1.0,
+      "depth_cap_reached": true,
+      "peak_surface_storage_m3": 185506.57,
+      "final_surface_storage_m3": 0.0,
+      "total_overflow_spill_m3": 192817.3,
+      "depth_interpretation": "Capped synthetic storage-equivalent depth; not a physical street-water prediction.",
+      "hours_high_risk": 7,
+      "relative_mass_error": 0.0,
+      "accounting_check_passed": true
+    },
+    "compound_disaster": {
+      "description": "Compound multi-hazard: 1.75x rain + 50% C4 blockage + 60% tidal outfall restriction",
+      "peak_rainfall_mm": 49.875,
+      "peak_flood_depth_sag_cm": 100.0,
+      "depth_cap_m": 1.0,
+      "depth_cap_reached": true,
+      "peak_surface_storage_m3": 145000.0,
+      "final_surface_storage_m3": 29862.52,
+      "total_overflow_spill_m3": 865729.27,
+      "depth_interpretation": "Capped synthetic storage-equivalent depth; not a physical street-water prediction.",
+      "hours_high_risk": 10,
+      "relative_mass_error": 1.2611003041509527e-16,
+      "accounting_check_passed": true
+    }
+  },
+  "nwp_pilot_coupling_event": {
+    "location": "Mumbai (loc_1275339, 19.0728 N, 72.8826 E)",
+    "date": "2026-07-05 (illustrative historical comparison; forecast origin 00:00 UTC)",
+    "sequence_semantics": "One historical forecast origin across contiguous lead hours; not an operational nowcast.",
+    "forecast_origin": "2026-07-05T00:00:00+00:00",
+    "hours": 24,
+    "peak_rainfall": {
+      "era5_truth_mm": 30.6,
+      "raw_nwp_ensemble_mm": 9.4,
+      "calibrated_model_mm": 3.223370895613696
+    },
+    "peak_simulated_flood_depth_sag_cm": {
+      "era5_truth_cm": 100.0,
+      "raw_nwp_ensemble_cm": 0.0,
+      "calibrated_model_cm": 0.0
+    },
+    "flood_hours_high_risk": {
+      "era5_truth": 17,
+      "raw_nwp_ensemble": 0,
+      "calibrated_model": 0
+    }
+  },
+  "generated_artifacts": [
+    "outputs/scenario_baseline.csv",
+    "outputs/scenario_heavy_rain.csv",
+    "outputs/scenario_conduit_blockage_c4.csv",
+    "outputs/scenario_conduit_blockage_c3.csv",
+    "outputs/scenario_coastal_high_tide.csv",
+    "outputs/scenario_compound_disaster.csv",
+    "outputs/flood_scenario_ponding_depths.png",
+    "outputs/scenario_mumbai_pilot_era5_truth.csv",
+    "outputs/scenario_mumbai_pilot_raw_nwp.csv",
+    "outputs/scenario_mumbai_pilot_calibrated_historical_comparison.csv",
+    "outputs/mumbai_event_coupling.png"
+  ],
+  "disclaimer_and_provenance": "All drainage conduit dimensions, slopes, manhole depths, and surface depression areas are engineered synthetic representations for prototype testing. No municipal sewer CAD/GIS, real storm drain telemetry, or street flood gauge data were supplied in the project dataset. Precipitation inputs are real NWP and ERA5-Land reanalysis values; flood depths are not empirical or operational predictions."
+}

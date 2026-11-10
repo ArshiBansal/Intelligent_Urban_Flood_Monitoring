@@ -1,0 +1,13 @@
+step_hour,rainfall_mm,generated_runoff_m3,conduit_flow_C1_m3,conduit_flow_C2_m3,conduit_flow_C3_m3,conduit_flow_C4_m3,conduit_C3_capacity_reached,conduit_C4_capacity_reached,conduit_C3_capacity_exceeded,conduit_C4_capacity_exceeded,overflow_spill_m3,discharged_outfall_m3,surface_storage_total_m3,ponding_depth_sag_N4_m,ponding_depth_sag_N4_cm,ponding_depth_junction_N3_cm,max_flood_depth_m,flood_risk_level
+0,0.0,0.0,0.0,0.0,0.0,0.0,False,False,False,False,0.0,0.0,0.0,0.0,0.0,0.0,0.0,LOW
+1,4.375,14789.62,3969.37,2640.0,10181.38,14170.88,False,False,False,False,0.0,14789.62,0.0,0.0,0.0,0.0,0.0,LOW
+2,10.5,74287.5,19162.5,12164.04,39172.59,28053.95,True,True,True,True,0.0,33828.95,40458.55,0.5542,55.42,20.28,0.5542,HIGH
+3,24.5,173337.5,23209.33,12164.04,39172.59,28053.95,True,True,True,True,30763.93,41528.95,141503.17,1.0,100.0,100.0,1.0,HIGH
+4,42.0,297150.0,23209.33,12164.04,39172.59,28053.95,True,True,True,True,242499.23,51153.95,145000.0,1.0,100.0,100.0,1.0,HIGH
+5,49.875,352865.62,23209.33,12164.04,39172.59,28053.95,True,True,True,True,297380.43,55485.2,145000.0,1.0,100.0,100.0,1.0,HIGH
+6,31.5,222862.5,23209.33,12164.04,39172.59,28053.95,True,True,True,True,177483.55,45378.95,145000.0,1.0,100.0,100.0,1.0,HIGH
+7,14.875,105240.62,23209.33,12164.04,39172.59,28053.95,True,True,True,True,69005.43,36235.2,145000.0,1.0,100.0,100.0,1.0,HIGH
+8,5.25,37143.75,23209.33,12164.04,39172.59,28053.95,True,True,True,True,23594.42,30941.45,127607.88,1.0,100.0,100.0,1.0,HIGH
+9,1.75,12381.25,14565.67,12164.04,39172.59,28053.95,True,True,True,True,13883.64,29016.45,97089.05,1.0,100.0,75.54,1.0,HIGH
+10,0.0,0.0,0.0,12164.04,39172.59,28053.95,True,True,True,True,11118.64,28053.95,57916.46,1.0,100.0,8.02,1.0,HIGH
+11,0.0,0.0,0.0,4707.88,7916.46,28053.95,False,True,False,True,0.0,28053.95,29862.52,0.5973,59.73,0.0,0.5973,HIGH
