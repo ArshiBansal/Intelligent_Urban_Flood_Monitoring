@@ -1,0 +1,130 @@
+# Configuration for Urban Flood Nowcasting System (SIH26085)
+
+project:
+  name: "Urban Flood Nowcasting System (Drainage and Rainfall Coupling)"
+  problem_id: "SIH26085"
+  category: "Disaster Management"
+  version: "1.0.0-prototype"
+
+paths:
+  data_dir: "weathergpt-d1-mos-dataset/d1_mos"
+  output_dir: "outputs"
+  logs_dir: "outputs/logs"
+
+parameters:
+  seed: 26085
+  rain_threshold_mm: 0.1
+  train_fraction: 0.70
+  spatial_holdout_fraction: 0.20
+  max_sample_rows: 150000
+  max_surface_depth_m: 1.0
+
+hurdle_model:
+  classifier:
+    max_iter: 120
+    max_leaf_nodes: 31
+    learning_rate: 0.08
+  regressor:
+    max_iter: 160
+    max_leaf_nodes: 31
+    learning_rate: 0.06
+    loss: "squared_error"
+    target_transform: "cbrt"
+
+pilot:
+  name: "Mumbai Coastal Metropolitan Hotspot (Mithi Catchment Synthetic Representation)"
+  dataset_location_id: "1275339"
+  coordinates:
+    lat: 19.0728
+    lon: 72.8826
+    elevation_m: 8.0
+  total_catchment_area_km2: 10.0
+  average_impervious_fraction: 0.77
+  timestep_hours: 1.0
+  risk_thresholds_cm:
+    low_upper: 5.0
+    medium_upper: 20.0
+    high_lower: 20.0
+
+drainage_network:
+  nodes:
+    - id: "N1"
+      name: "North Ridge (Commercial/Hill)"
+      surface_elevation_m: 28.0
+      invert_elevation_m: 26.5
+      area_km2: 2.5
+      impervious_fraction: 0.80
+      ponding_area_m2: 25000.0
+    - id: "N2"
+      name: "East Suburb (Residential)"
+      surface_elevation_m: 22.0
+      invert_elevation_m: 20.8
+      area_km2: 2.5
+      impervious_fraction: 0.65
+      ponding_area_m2: 30000.0
+    - id: "N3"
+      name: "Central Urban Junction"
+      surface_elevation_m: 15.0
+      invert_elevation_m: 13.5
+      area_km2: 2.0
+      impervious_fraction: 0.85
+      ponding_area_m2: 40000.0
+    - id: "N4"
+      name: "South Underpass Sag (Depression Hotspot)"
+      surface_elevation_m: 7.5
+      invert_elevation_m: 5.5
+      area_km2: 2.0
+      impervious_fraction: 0.90
+      ponding_area_m2: 50000.0
+    - id: "N5"
+      name: "Coastal/Creek Outfall (Tidal Boundary)"
+      surface_elevation_m: 2.0
+      invert_elevation_m: 0.5
+      area_km2: 1.0
+      impervious_fraction: 0.50
+      ponding_area_m2: 60000.0
+      is_outfall: true
+
+  conduits:
+    - id: "C1"
+      from: "N1"
+      to: "N3"
+      length_m: 800.0
+      width_m: 1.4
+      height_m: 1.4
+      shape: "circular"
+      slope: 0.016
+      manning_n: 0.015
+    - id: "C2"
+      from: "N2"
+      to: "N3"
+      length_m: 750.0
+      width_m: 1.2
+      height_m: 1.2
+      shape: "circular"
+      slope: 0.010
+      manning_n: 0.015
+    - id: "C3"
+      from: "N3"
+      to: "N4"
+      length_m: 650.0
+      width_m: 2.2
+      height_m: 1.6
+      shape: "box"
+      slope: 0.006
+      manning_n: 0.015
+    - id: "C4"
+      from: "N4"
+      to: "N5"
+      length_m: 900.0
+      width_m: 3.0
+      height_m: 2.0
+      shape: "box"
+      slope: 0.003
+      manning_n: 0.015
+
+synthetic_scenarios:
+  baseline_rain_mm: [0.0, 2.5, 6.0, 14.0, 24.0, 28.5, 18.0, 8.5, 3.0, 1.0, 0.0, 0.0]
+  heavy_rain_multiplier: 1.75
+  blockage_fraction: 0.50
+  outfall_restriction_fraction: 0.60

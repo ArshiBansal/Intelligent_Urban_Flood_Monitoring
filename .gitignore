@@ -1,0 +1,17 @@
+# Local Python environments
+.venv/
+venv/
+env/
+
+# Python bytecode and test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Local plotting and editor/OS files
+outputs/.matplotlib/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

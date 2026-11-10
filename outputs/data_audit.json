@@ -1,0 +1,157 @@
+{
+  "status": "completed",
+  "audit_duration_seconds": 5.56,
+  "files_audited": 127,
+  "total_rows": 9582912,
+  "unique_locations_count": 127,
+  "time_coverage": {
+    "min_valid_time": "2025-08-01T00:00:00+00:00",
+    "max_valid_time": "2026-08-28T23:00:00+00:00",
+    "duration_days": 393.0
+  },
+  "lead_hours_coverage": {
+    "min_lead_hours": 0,
+    "max_lead_hours": 191,
+    "total_lead_steps": 192
+  },
+  "integrity_checks": {
+    "duplicate_keys_within_shards": 0,
+    "total_chunk_misses": 0,
+    "schema_uniformity": "All 127 shards share identical schema and 75,456 rows each."
+  },
+  "missing_values": {
+    "truth_precipitation": 0,
+    "fc_precipitation_gfs_seamless": 0,
+    "fc_precipitation_ecmwf_ifs025": 32766,
+    "fc_precipitation_icon_seamless": 1227201,
+    "fc_precipitation_gem_seamless": 50292
+  },
+  "truth_precipitation_distribution": {
+    "min_mm": 0.0,
+    "max_mm": 30.6,
+    "mean_mm": 0.1752,
+    "std_mm": 0.6945,
+    "dry_fraction_under_0.1mm": 0.7596,
+    "wet_fraction_ge_0.1mm": 0.2404,
+    "moderate_rain_fraction_ge_5mm": 0.0039,
+    "heavy_rain_fraction_ge_15mm": 0.0002,
+    "extreme_rain_fraction_ge_30mm": 3e-06,
+    "extreme_rain_event_hours": 24
+  },
+  "uncorrected_nwp_vs_truth_overall": {
+    "fc_precipitation_gfs_seamless": {
+      "mae_mm": 0.21536129101467277,
+      "bias_mm": -0.053198933685293166,
+      "valid_pairs": 9582912,
+      "missing_values": 0
+    },
+    "fc_precipitation_ecmwf_ifs025": {
+      "mae_mm": 0.22492012164002523,
+      "bias_mm": 0.006580213538096697,
+      "valid_pairs": 9550146,
+      "missing_values": 32766
+    },
+    "fc_precipitation_icon_seamless": {
+      "mae_mm": 0.229543338681771,
+      "bias_mm": -0.013374421398729559,
+      "valid_pairs": 8355711,
+      "missing_values": 1227201
+    },
+    "fc_precipitation_gem_seamless": {
+      "mae_mm": 0.25682988517322625,
+      "bias_mm": -0.008812886698515205,
+      "valid_pairs": 9532620,
+      "missing_values": 50292
+    }
+  },
+  "states_represented": {
+    "Maharashtra": 12,
+    "Tamil Nadu": 10,
+    "Karnataka": 9,
+    "Uttar Pradesh": 8,
+    "Rajasthan": 8,
+    "Kerala": 7,
+    "Andhra Pradesh": 6,
+    "Gujarat": 6,
+    "West Bengal": 6,
+    "Odisha": 6,
+    "Madhya Pradesh": 6,
+    "Assam": 4,
+    "Bihar": 4,
+    "Telangana": 3,
+    "Haryana": 3,
+    "Jharkhand": 3,
+    "Chhattisgarh": 3,
+    "Uttarakhand": 3,
+    "Jammu and Kashmir": 2,
+    "Dadra and Nagar Haveli and Daman and Diu": 2,
+    "Punjab": 2,
+    "Himachal Pradesh": 1,
+    "Meghalaya": 1,
+    "Andaman and Nicobar": 1,
+    "Puducherry": 1,
+    "National Capital Territory of Delhi": 1,
+    "Ladakh": 1,
+    "Nagaland": 1,
+    "Lakshadweep": 1,
+    "unknown": 1,
+    "Manipur": 1,
+    "Sikkim": 1,
+    "Chandigarh": 1,
+    "Mizoram": 1,
+    "Tripura": 1
+  },
+  "key_flood_hotspot_cities_identified": {
+    "Visakhapatnam": {
+      "loc_id": "1253102",
+      "lat": 17.6801,
+      "lon": 83.2016,
+      "elevation_m": 24.0,
+      "admin1": "Andhra Pradesh",
+      "file": "loc_1253102.parquet"
+    },
+    "Surat": {
+      "loc_id": "1255364",
+      "lat": 21.1959,
+      "lon": 72.8302,
+      "elevation_m": 20.0,
+      "admin1": "Gujarat",
+      "file": "loc_1255364.parquet"
+    },
+    "Delhi": {
+      "loc_id": "1261481",
+      "lat": 28.6214,
+      "lon": 77.2148,
+      "elevation_m": 211.0,
+      "admin1": "National Capital Territory of Delhi",
+      "file": "loc_1261481.parquet"
+    },
+    "Chennai": {
+      "loc_id": "1264527",
+      "lat": 13.0878,
+      "lon": 80.2785,
+      "elevation_m": 14.0,
+      "admin1": "Tamil Nadu",
+      "file": "loc_1264527.parquet"
+    },
+    "Mumbai": {
+      "loc_id": "1275339",
+      "lat": 19.0728,
+      "lon": 72.8826,
+      "elevation_m": 8.0,
+      "admin1": "Maharashtra",
+      "file": "loc_1275339.parquet"
+    }
+  },
+  "data_provenance_and_limitations": {
+    "source": "Open-Meteo historical forecast API (GFS Seamless, ECMWF IFS 0.25, ICON Seamless, GEM Seamless) and ERA5-Land reanalysis truth.",
+    "precipitation_units_note": "Schema does not embed unit strings. Open-Meteo and ERA5-Land hourly precipitation is standardly mm/hour accumulation. Treated as mm/hour prototype assumption.",
+    "missing_layers": [
+      "Weather radar (Doppler radar reflectivity dBZ / rain rate grids)",
+      "Automated rain-gauge telemetry (tipping-bucket network)",
+      "High-resolution DEM / LiDAR terrain rasters (sub-meter or 5m/10m)",
+      "Municipal storm-drainage GIS (inlets, manholes, pipe diameters, invert levels, culverts, outfalls)",
+      "Observed flood labels, street-level flood depth sensors, waterlogged intersection logs, or emergency dispatch records"
+    ]
+  }
+}
