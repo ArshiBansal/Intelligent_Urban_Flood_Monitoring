@@ -68,6 +68,7 @@ def audit(data_dir: Path) -> dict:
             "elevation_m": elevation_m,
             "admin1": admin1,
             "file": path.name,
+            "row_count": num_rows,
         }
 
         # Chunk misses
@@ -79,6 +80,8 @@ def audit(data_dir: Path) -> dict:
         t_bounds = pc.min_max(table["valid_time"]).as_py()
         time_mins.append(t_bounds["min"])
         time_maxs.append(t_bounds["max"])
+        locations[str(loc_id)]["first_valid_time"] = t_bounds["min"].isoformat()
+        locations[str(loc_id)]["last_valid_time"] = t_bounds["max"].isoformat()
         l_bounds = pc.min_max(table["lead_hours"]).as_py()
         lead_mins.append(l_bounds["min"])
         lead_maxs.append(l_bounds["max"])
@@ -90,6 +93,9 @@ def audit(data_dir: Path) -> dict:
         duplicate_keys += (num_rows - unique_keys)
 
         # Missing counts
+        locations[str(loc_id)]["forecast_missing_values"] = {
+            col: int(table[col].null_count) for col in PRECIP_FORECASTS
+        }
         for col in ["truth_precipitation", *PRECIP_FORECASTS]:
             missing[col] += table[col].null_count
 
@@ -107,6 +113,14 @@ def audit(data_dir: Path) -> dict:
             precip_count += n_valid
 
             wet_count += pc.sum(pc.greater_equal(t_valid, 0.1)).as_py()
+            location_wet_count = pc.sum(pc.greater_equal(t_valid, 0.1)).as_py()
+            locations[str(loc_id)]["mean_truth_precipitation_mm"] = round(
+                float(pc.mean(t_valid).as_py()), 4
+            )
+            locations[str(loc_id)]["wet_hours"] = int(location_wet_count)
+            locations[str(loc_id)]["wet_fraction"] = round(
+                location_wet_count / max(n_valid, 1), 4
+            )
             moderate_count += pc.sum(pc.greater_equal(t_valid, 5.0)).as_py()
             heavy_count += pc.sum(pc.greater_equal(t_valid, 15.0)).as_py()
             extreme_count += pc.sum(pc.greater_equal(t_valid, 30.0)).as_py()
@@ -143,6 +157,16 @@ def audit(data_dir: Path) -> dict:
 
     # Count locations by admin1 state
     admin1_counts = Counter(loc["admin1"] for loc in locations.values())
+    location_catalog = [
+        {
+            **info,
+            "location_label": (
+                f"loc_{info['loc_id']} ({info['admin1']}; "
+                f"{info['lat']:.4f}, {info['lon']:.4f})"
+            ),
+        }
+        for info in sorted(locations.values(), key=lambda item: int(item["loc_id"]))
+    ]
 
     # Highlight key metropolitan flood hotspots present
     key_cities = {}
@@ -197,6 +221,7 @@ def audit(data_dir: Path) -> dict:
         },
         "uncorrected_nwp_vs_truth_overall": model_summary,
         "states_represented": dict(admin1_counts.most_common()),
+        "locations": location_catalog,
         "key_flood_hotspot_cities_identified": key_cities,
         "data_provenance_and_limitations": {
             "source": "Open-Meteo historical forecast API (GFS Seamless, ECMWF IFS 0.25, ICON Seamless, GEM Seamless) and ERA5-Land reanalysis truth.",

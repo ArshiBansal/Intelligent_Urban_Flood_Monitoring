@@ -16,6 +16,66 @@ def image_to_base64_data_uri(path: Path) -> str:
     return f"data:image/png;base64,{data}"
 
 
+def build_location_map_svg(locations: list[dict], spatial_holdout_ids: set[str]) -> str:
+    """Build a self-contained latitude/longitude plot for the dataset locations."""
+    if not locations:
+        return '<p class="location-empty">Location details are unavailable. Run the dataset audit to add them.</p>'
+
+    width, height = 760, 470
+    left, right, top, bottom = 62, 730, 24, 420
+    lats = [float(item["lat"]) for item in locations]
+    lons = [float(item["lon"]) for item in locations]
+    lat_min, lat_max = min(lats), max(lats)
+    lon_min, lon_max = min(lons), max(lons)
+    lat_span = max(lat_max - lat_min, 1.0)
+    lon_span = max(lon_max - lon_min, 1.0)
+    lat_min -= lat_span * 0.06
+    lat_max += lat_span * 0.06
+    lon_min -= lon_span * 0.06
+    lon_max += lon_span * 0.06
+
+    grid = []
+    for step in range(5):
+        fraction = step / 4
+        x = left + fraction * (right - left)
+        y = top + fraction * (bottom - top)
+        longitude = lon_min + fraction * (lon_max - lon_min)
+        latitude = lat_max - fraction * (lat_max - lat_min)
+        grid.append(
+            f'<line x1="{x:.1f}" y1="{top}" x2="{x:.1f}" y2="{bottom}" class="map-grid" />'
+            f'<text x="{x:.1f}" y="{bottom + 22}" class="map-axis-label" text-anchor="middle">{longitude:.1f}°E</text>'
+            f'<line x1="{left}" y1="{y:.1f}" x2="{right}" y2="{y:.1f}" class="map-grid" />'
+            f'<text x="{left - 10}" y="{y + 4:.1f}" class="map-axis-label" text-anchor="end">{latitude:.1f}°N</text>'
+        )
+
+    points = []
+    for item in locations:
+        loc_id = str(item.get("loc_id", ""))
+        x = left + (float(item["lon"]) - lon_min) / (lon_max - lon_min) * (right - left)
+        y = top + (lat_max - float(item["lat"])) / (lat_max - lat_min) * (bottom - top)
+        label = str(item.get("location_label", f"loc_{loc_id}"))
+        state = str(item.get("admin1", "unknown"))
+        fill_class = "heldout" if loc_id in spatial_holdout_ids else "seen"
+        description = (
+            f"{label} | {state} | {float(item['lat']):.4f}°N, "
+            f"{float(item['lon']):.4f}°E"
+        )
+        points.append(
+            f'<circle class="location-point {fill_class}" data-location-id="{html.escape(loc_id, quote=True)}" '
+            f'cx="{x:.2f}" cy="{y:.2f}" r="5.5" tabindex="0" role="button" '
+            f'aria-label="{html.escape(description, quote=True)}"><title>{html.escape(description)}</title></circle>'
+        )
+
+    return (
+        f'<svg class="location-map" viewBox="0 0 {width} {height}" role="img" '
+        'aria-label="Latitude and longitude plot of dataset locations">'
+        f'<rect x="{left}" y="{top}" width="{right-left}" height="{bottom-top}" rx="8" class="map-plot-bg" />'
+        f'{"".join(grid)}{"".join(points)}'
+        f'<text x="{(left + right) / 2}" y="{height - 8}" class="map-axis-title" text-anchor="middle">Longitude</text>'
+        '</svg>'
+    )
+
+
 def build_dashboard(output_dir: Path) -> Path:
     audit_file = output_dir / "data_audit.json"
     metrics_file = output_dir / "precipitation_metrics.json"
@@ -72,6 +132,30 @@ def build_dashboard(output_dir: Path) -> Path:
 
     temp_mae_gain = round((temp_raw.get("mae_mm", 1) - temp_cal.get("mae_mm", 1)) / max(temp_raw.get("mae_mm", 1), 1e-6) * 100, 2)
     spat_mae_gain = round((spat_raw.get("mae_mm", 1) - spat_cal.get("mae_mm", 1)) / max(spat_raw.get("mae_mm", 1), 1e-6) * 100, 2)
+    locations = audit.get("locations", metrics.get("locations", []))
+    locations = sorted(locations, key=lambda item: int(item.get("loc_id", 0)))
+    spatial_holdout_ids = {
+        str(loc_id) for loc_id in metrics.get("spatial_holdout_locations", [])
+    }
+    location_rows = "".join(
+        f'<tr class="location-row" data-location-id="{html.escape(str(item.get("loc_id", "")), quote=True)}" '
+        f'data-search="{html.escape(" ".join(str(item.get(key, "")) for key in ("loc_id", "location_label", "admin1")), quote=True).lower()}">'
+        f"<td>{html.escape(str(item.get('location_label', item.get('loc_id', ''))))}</td>"
+        f"<td>{html.escape(str(item.get('admin1', 'unknown')))}</td>"
+        f"<td>{float(item.get('lat', 0)):.4f}</td><td>{float(item.get('lon', 0)):.4f}</td>"
+        f"<td>{float(item.get('elevation_m', 0)):.1f}</td>"
+        f"<td>{int(item.get('row_count', 0)):,}</td>"
+        f"<td>{html.escape(str(item.get('first_valid_time', '—'))[:10])} – {html.escape(str(item.get('last_valid_time', '—'))[:10])}</td>"
+        f"<td>{float(item.get('mean_truth_precipitation_mm', 0)):.3f}</td>"
+        f"<td>{int(item.get('wet_hours', 0)):,} ({float(item.get('wet_fraction', 0)) * 100:.1f}%)</td>"
+        f"<td>{sum((item.get('forecast_missing_values') or {}).values()):,}</td>"
+        f"<td>{'Spatial holdout' if str(item.get('loc_id', '')) in spatial_holdout_ids else 'Seen locations'}</td></tr>"
+        for item in locations
+    )
+    if not location_rows:
+        location_rows = '<tr><td colspan="11">Run the dataset audit to populate location statistics.</td></tr>'
+    location_map = build_location_map_svg(locations, spatial_holdout_ids)
+    location_state_count = len({str(item.get("admin1", "unknown")) for item in locations})
     csi_block = (
         f'<div class="chart-card"><h3>Categorical Threat Score (CSI) from current metrics</h3>'
         f'<img src="{p_csi}" alt="CSI by threshold"></div>'
@@ -207,6 +291,30 @@ def build_dashboard(output_dir: Path) -> Path:
     th, td {{ border: 1px solid var(--border); padding: 0.6rem 0.75rem; text-align: left; }}
     th {{ background: #f1f5f9; font-weight: 600; color: #334155; }}
     tr:nth-child(even) {{ background: #fafafa; }}
+    .location-row {{ cursor:pointer; }}
+    .location-row.selected-location-row {{ outline:2px solid #0284c7; outline-offset:-2px; background:#eff6ff !important; }}
+    .location-toolbar {{ display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center; margin:1rem 0; }}
+    .location-search {{ flex:1 1 260px; max-width:460px; padding:0.65rem 0.8rem; border:1px solid #cbd5e1; border-radius:0.4rem; font-size:0.95rem; }}
+    .location-layout {{ display:grid; grid-template-columns:minmax(320px, 1fr) minmax(280px, 0.8fr); gap:1rem; align-items:start; }}
+    .location-map-wrap {{ min-width:0; border:1px solid var(--border); border-radius:0.5rem; background:#f8fafc; padding:0.5rem; }}
+    .location-map {{ display:block; width:100%; height:auto; }}
+    .map-plot-bg {{ fill:#f8fafc; stroke:#cbd5e1; }}
+    .map-grid {{ stroke:#dbe3ed; stroke-width:1; }}
+    .map-axis-label {{ fill:#475569; font-size:12px; }}
+    .map-axis-title {{ fill:#334155; font-size:13px; font-weight:600; }}
+    .location-point {{ stroke:#fff; stroke-width:1.5; cursor:pointer; transition:r 0.12s ease; }}
+    .location-point.seen {{ fill:#0284c7; }}
+    .location-point.heldout {{ fill:#f97316; }}
+    .location-point:hover, .location-point:focus, .location-point.selected {{ r:8; stroke:#0f172a; stroke-width:2; outline:none; }}
+    .location-point[hidden] {{ display:none; }}
+    .location-legend {{ display:flex; gap:1rem; flex-wrap:wrap; color:var(--text-muted); font-size:0.85rem; padding:0.4rem 0.5rem; }}
+    .legend-dot {{ display:inline-block; width:0.7rem; height:0.7rem; border-radius:50%; margin-right:0.35rem; }}
+    .legend-seen {{ background:#0284c7; }} .legend-heldout {{ background:#f97316; }}
+    .location-profile {{ min-height:3.5rem; padding:0.8rem 1rem; background:#eff6ff; border-radius:0.4rem; color:#1e3a8a; margin-top:0.75rem; }}
+    .location-table-wrap {{ max-height:30rem; overflow:auto; margin-top:1rem; }}
+    #datasetLocationTable {{ min-width:1120px; }}
+    .location-empty {{ padding:1rem; color:var(--text-muted); }}
+    @media (max-width:800px) {{ .location-layout {{ grid-template-columns:1fr; }} .chart-container {{ grid-template-columns:1fr; }} }}
 
     .scenario-controls {{
       display: flex;
@@ -311,6 +419,41 @@ def build_dashboard(output_dir: Path) -> Path:
       <div class="kpi-sub">Accounting includes explicit surface spill (relative error &lt; 10<sup>-5</sup>)</div>
     </div>
   </div>
+
+  <section class="card" id="datasetLocations">
+    <h2>Dataset Locations & Per-Location Statistics</h2>
+    <p style="color:var(--text-muted); font-size:0.95rem;">
+      Every weather-data row is tied to a source location ID. The source gives state/UT and coordinates, but not district names;
+      the map is a latitude/longitude plot, not an administrative boundary map. Rainfall statistics below use ERA5-Land reference values.
+    </p>
+    <div class="location-toolbar">
+      <input id="datasetLocationSearch" class="location-search" type="search" placeholder="Search by location ID or state / UT" aria-label="Search dataset locations">
+      <span><strong>{len(locations)}</strong> locations across <strong>{location_state_count}</strong> states / UTs</span>
+      <span id="locationResultCount" aria-live="polite"></span>
+    </div>
+    <div class="location-layout">
+      <div class="location-map-wrap">
+        {location_map}
+        <div class="location-legend">
+          <span><i class="legend-dot legend-seen"></i>Seen locations</span>
+          <span><i class="legend-dot legend-heldout"></i>Spatial test holdout</span>
+        </div>
+      </div>
+      <div>
+        <h3 style="margin-top:0;">Selected location</h3>
+        <div class="location-profile" id="selectedDatasetLocation">Choose a point on the plot or a row in the table to see its identifier.</div>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.75rem;">
+          Blue markers are locations seen during model training/testing; orange markers are the held-out locations used to assess spatial generalization.
+        </p>
+      </div>
+    </div>
+    <div class="location-table-wrap">
+      <table id="datasetLocationTable">
+        <thead><tr><th>Location ID</th><th>State / UT</th><th>Latitude</th><th>Longitude</th><th>Elevation (m)</th><th>Rows</th><th>Data period (UTC)</th><th>Mean reference rain (mm/h)</th><th>Wet reference hours / % (&ge;0.1 mm)</th><th>Missing forecast cells</th><th>Evaluation set</th></tr></thead>
+        <tbody>{location_rows}</tbody>
+      </table>
+    </div>
+  </section>
 
   <!-- Interactive Drainage Simulation -->
   <section class="card">
@@ -561,6 +704,54 @@ python -m http.server 8000 --directory outputs</code></pre>
 </main>
 
 <script>
+  const locationRows = Array.from(document.querySelectorAll("#datasetLocationTable tbody .location-row"));
+  const locationPoints = Array.from(document.querySelectorAll(".location-point"));
+  const locationSearch = document.getElementById("datasetLocationSearch");
+  const locationResultCount = document.getElementById("locationResultCount");
+
+  function selectDatasetLocation(row) {{
+    if (!row) return;
+    locationRows.forEach(item => item.classList.toggle("selected-location-row", item === row));
+    locationPoints.forEach(point => point.classList.toggle("selected", point.dataset.locationId === row.dataset.locationId));
+    const cells = Array.from(row.cells).map(cell => cell.textContent.trim());
+    document.getElementById("selectedDatasetLocation").textContent =
+      `${{cells[0]}} · ${{cells[1]}} · ${{cells[2]}}°N, ${{cells[3]}}°E · ${{cells[5]}} rows · mean rain ${{cells[7]}} mm/h · ${{cells[8]}} wet`;
+  }}
+
+  function filterDatasetLocations() {{
+    const query = locationSearch.value.trim().toLocaleLowerCase();
+    const visibleIds = new Set();
+    locationRows.forEach(row => {{
+      const visible = row.dataset.search.includes(query);
+      row.hidden = !visible;
+      if (visible) visibleIds.add(row.dataset.locationId);
+    }});
+    locationPoints.forEach(point => {{ point.hidden = !visibleIds.has(point.dataset.locationId); }});
+    locationResultCount.textContent = `${{visibleIds.size}} shown`;
+    const selected = locationRows.find(row => row.classList.contains("selected-location-row"));
+    if (selected && selected.hidden) selectDatasetLocation(locationRows.find(row => !row.hidden));
+  }}
+
+  locationRows.forEach(row => {{
+    row.addEventListener("click", () => selectDatasetLocation(row));
+    row.addEventListener("keydown", event => {{
+      if (event.key === "Enter" || event.key === " ") {{ event.preventDefault(); selectDatasetLocation(row); }}
+    }});
+    row.tabIndex = 0;
+  }});
+  locationPoints.forEach(point => {{
+    point.addEventListener("click", () => selectDatasetLocation(locationRows.find(row => row.dataset.locationId === point.dataset.locationId)));
+    point.addEventListener("keydown", event => {{
+      if (event.key === "Enter" || event.key === " ") {{
+        event.preventDefault();
+        selectDatasetLocation(locationRows.find(row => row.dataset.locationId === point.dataset.locationId));
+      }}
+    }});
+  }});
+  locationSearch.addEventListener("input", filterDatasetLocations);
+  locationResultCount.textContent = `${{locationRows.length}} shown`;
+  if (locationRows.length) selectDatasetLocation(locationRows[0]);
+
   const scenarioData = {scenarios_json_str};
 
   function updateScenario(name) {{
