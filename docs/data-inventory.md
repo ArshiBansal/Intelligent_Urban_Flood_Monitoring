@@ -20,6 +20,18 @@ The dataset located at `weathergpt-d1-mos-dataset/d1_mos` was fully audited acro
 | **Missing Values** | GFS: 0 (0.0%)<br>ECMWF: 32,766 (0.34%)<br>ICON: 1,227,201 (12.81%)<br>GEM: 50,292 (0.52%) | Missing forecast features are filled with zero and an explicit missing-count predictor is retained |
 | **Data Integrity** | `duplicate_keys = 0`<br>`chunk_misses = 0` | Zero duplicate `(valid_time, lead_hours)` pairs; zero failed chunk fetches |
 
+The generated `outputs/data_audit.json` now includes a complete `locations` catalog.
+Each entry identifies its rows using `loc_id`, source file, state/union territory
+(`admin1`), latitude, longitude, and elevation. The district name is not present
+in the source schema, so the dashboard uses this source-backed identifier rather
+than guessing a district name. Per-location statistics include row count, UTC
+coverage period, mean ERA5-Land reference rainfall, wet-hour count and fraction,
+and missing forecast-cell count. The dashboard plots the locations by
+latitude/longitude, lets viewers search by location ID or state/UT, and marks
+the spatial holdout locations separately. `outputs/precipitation_metrics.json`
+includes the same catalog and adds `spatial_holdout_location_details` for the
+locations used in the spatial evaluation.
+
 ### Target Distribution (`truth_precipitation`)
 - **Min / Max:** 0.0000 mm / 30.6000 mm
 - **Mean / Std:** 0.1752 mm / 0.6945 mm

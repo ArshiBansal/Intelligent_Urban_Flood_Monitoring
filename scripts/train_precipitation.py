@@ -86,6 +86,26 @@ def evaluate_partition(frame, models, train_mean, threshold, probability_thresho
     return baselines, raw, calibrated
 
 
+def location_catalog(frame: pd.DataFrame) -> list[dict]:
+    """Return stable, human-readable identifiers for every location in a frame."""
+    columns = ["loc_id", "lat", "lon", "elevation_m", "admin1"]
+    locations = frame[columns].drop_duplicates("loc_id").sort_values("loc_id")
+    result = []
+    for row in locations.to_dict("records"):
+        result.append({
+            "loc_id": str(row["loc_id"]),
+            "location_label": (
+                f"loc_{row['loc_id']} ({row['admin1']}; "
+                f"{float(row['lat']):.4f}, {float(row['lon']):.4f})"
+            ),
+            "lat": float(row["lat"]),
+            "lon": float(row["lon"]),
+            "elevation_m": float(row["elevation_m"]),
+            "admin1": str(row["admin1"]),
+        })
+    return result
+
+
 def generate_plots(output_dir, test, raw, calibrated):
     output_dir.mkdir(parents=True, exist_ok=True)
     lead_ranges = [(0, 3), (0, 6), (7, 24), (25, 72), (73, 191)]
@@ -160,6 +180,8 @@ def main():
         validate_precipitation_frame(part.drop_duplicates(["loc_id", "valid_time", "lead_hours"]))
     models = train_models(train, args.wet_threshold, args.seed)
     train_mean = float(train["truth_precipitation"].mean())
+    all_locations = location_catalog(frame)
+    location_by_id = {item["loc_id"]: item for item in all_locations}
     output = Path(args.output_dir)
     output.mkdir(parents=True, exist_ok=True)
     with (output / "precipitation_model.pkl").open("wb") as handle:
@@ -208,6 +230,10 @@ def main():
             ),
         },
         "spatial_holdout_locations": held_out,
+        "spatial_holdout_location_details": [
+            location_by_id[str(loc_id)] for loc_id in held_out
+        ],
+        "locations": all_locations,
         "configuration": {"seed": args.seed, "wet_threshold_mm": args.wet_threshold,
                           "probability_threshold": args.probability_threshold,
                           "training_sample_cap_per_partition": args.max_rows},
