@@ -2,20 +2,28 @@
 
 > [!NOTE]
 > A **reproducible research prototype** for precipitation calibration and
-> synthetic urban-drainage scenarios — not an operational flood-warning system.
+> config-driven urban-drainage scenarios.
 
 ## Contents
 
-- [Project at a glance](#project-at-a-glance)
-- [Capstone and SIH problem context](#capstone-and-sih-problem-context)
-- [Dataset and provenance](#dataset-and-provenance)
-- [Implementation diagrams](#implementation-diagrams)
-- [Implemented scope and gaps](#implemented-scope-and-gaps)
-- [Reproduce from PowerShell](#reproduce-from-powershell)
-- [Results](#results)
-- [Dashboard and scenario figures](#dashboard-and-scenario-figures)
-- [Evidence boundaries](#evidence-boundaries)
-- [Project documentation](#project-documentation)
+- [Urban Flood Nowcasting System (SIH26085)](#urban-flood-nowcasting-system-sih26085)
+  - [Contents](#contents)
+  - [Project at a glance](#project-at-a-glance)
+  - [Capstone and SIH problem context](#capstone-and-sih-problem-context)
+  - [Dataset and provenance](#dataset-and-provenance)
+  - [Implementation diagrams](#implementation-diagrams)
+    - [Precipitation calibration and evaluation](#precipitation-calibration-and-evaluation)
+    - [Configured drainage network](#configured-drainage-network)
+    - [Illustrative historical comparison](#illustrative-historical-comparison)
+  - [Implemented scope and gaps](#implemented-scope-and-gaps)
+  - [Reproduce from PowerShell](#reproduce-from-powershell)
+  - [Results](#results)
+  - [Dashboard and scenario figures](#dashboard-and-scenario-figures)
+    - [Precipitation evaluation](#precipitation-evaluation)
+    - [Drainage scenarios](#drainage-scenarios)
+    - [Illustrative Mumbai historical comparison](#illustrative-mumbai-historical-comparison)
+  - [Limitations](#limitations)
+  - [Project documentation](#project-documentation)
 
 ## Project at a glance
 
@@ -23,9 +31,8 @@ This repository contains two explicitly separate demonstrations:
 
 1. **Precipitation calibration:** a Model Output Statistics (MOS) model trained
    on multi-model historical NWP forecasts and evaluated against ERA5-Land.
-2. **Synthetic drainage demonstration:** a config-driven rainfall/runoff/
-   drainage model with an offline scenario dashboard. Its depths are
-   *accounting outputs*, not observed or operational street-flood predictions.
+2. **Drainage demonstration:** a config-driven rainfall/runoff/
+   drainage model with an offline scenario dashboard.
 
 > [!IMPORTANT]
 > The dataset audit covers **9,582,912 rows**. Training and evaluation use
@@ -49,9 +56,8 @@ publicly readable listing. Treat the ID and detailed scope here as the supplied
 brief/configuration's attribution, and confirm the final statement with the
 team's SIH record before submission.
 
-The capstone goal is broader than the implemented prototype. This repository
-demonstrates selected rainfall-calibration and drainage-accounting components;
-it does **not** claim a live, city-ready 0–6 hour flood-warning service.
+This repository implements selected rainfall-calibration and drainage
+components of the broader capstone goal.
 
 ## Dataset and provenance
 
@@ -63,8 +69,7 @@ Indian locations**, with hourly historical forecasts from GFS, ECMWF, ICON,
 and GEM and ERA5-Land reference values. The listed period is 2025-08-01 through
 2026-08-28, with forecast leads of 0–191 hours. The dataset card attributes
 the forecast and reanalysis data to Open-Meteo's historical-forecast API and
-ERA5-Land archive; ERA5-Land is a reanalysis reference, not independent
-rain-gauge ground truth.
+ERA5-Land archive.
 
 Please retain attribution and follow the dataset card's
 [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/) when
@@ -73,8 +78,7 @@ gaps are documented in [docs/data-inventory.md](docs/data-inventory.md).
 
 ## Implementation diagrams
 
-These diagrams follow the repository's current code paths. They describe an
-offline prototype, not a live operational service.
+These diagrams follow the repository's current code paths.
 
 ### Precipitation calibration and evaluation
 
@@ -133,7 +137,7 @@ extrapolation model. Main code: [`scripts/train_precipitation.py`](scripts/train
 [`src/floodnowcast/data.py`](src/floodnowcast/data.py), and
 [`src/floodnowcast/calibration.py`](src/floodnowcast/calibration.py).
 
-### Configured synthetic drainage network
+### Configured drainage network
 
 <!-- mermaid-checked: no \n, no em-dash/en-dash, no {} in labels, subgraphs are id["label"], arrows are -->|"label"|, all subgraphs closed by end, ids unique -->
 ```mermaid
@@ -165,8 +169,7 @@ flowchart LR
 [`src/floodnowcast/drainage.py`](src/floodnowcast/drainage.py) computes runoff
 at each node, routes inflows through the configured directed conduits, then
 tracks bounded surface storage, spill, outfall discharge, and accounting
-checks. The five nodes and four conduits are synthetic values in
-[`config.yaml`](config.yaml), not a verified municipal network.
+checks. Network geometry is defined in [`config.yaml`](config.yaml).
 
 ### Illustrative historical comparison
 
@@ -179,28 +182,22 @@ flowchart LR
     hCalibrate["Apply trained calibration model"]
     hRaw["Raw ensemble rainfall"]
     hCalibrated["Calibrated rainfall"]
-    hSynthetic["Same synthetic drainage network"]
+    hDrainage["Same drainage network"]
     hCompare["Compare rainfall and simulated depths"]
     hOrigin --> hForecasts
     hOrigin --> hTruth
     hForecasts --> hCalibrate
     hForecasts --> hRaw
-    hRaw --> hSynthetic
+    hRaw --> hDrainage
     hCalibrate --> hCalibrated
-    hCalibrated --> hSynthetic
-    hTruth --> hSynthetic
-    hSynthetic --> hCompare
+    hCalibrated --> hDrainage
+    hTruth --> hDrainage
+    hDrainage --> hCompare
 ```
 
 This comparison uses contiguous lead hours from one historical forecast
-origin. The ERA5-Land sequence is a reference, and all three rainfall
-sequences are passed through the same **synthetic** drainage model; this is
-not observed flood-event validation. See
-[`scripts/run_flood_demo.py`](scripts/run_flood_demo.py).
-
-<mark>Key distinction:</mark> calibrated precipitation metrics and synthetic
-ponding depths describe different demonstrations and are not interchangeable.
-The prototype has <u>no verified operational flood predictions</u>.
+origin. All three rainfall sequences are passed through the same drainage
+model. See [`scripts/run_flood_demo.py`](scripts/run_flood_demo.py).
 
 ## Implemented scope and gaps
 
@@ -211,20 +208,19 @@ delivered.
 | SIH brief capability | What this repository does | Status |
 |---|---|---|
 | Ingest live IMD radar, satellite QPE, and gauge data | Trains/evaluates on a downloaded historical NWP/ERA5-Land dataset; no live ingestion | **Not implemented** |
-| Produce fine-resolution 0–6 h rainfall nowcasts | Calibrates tabular NWP precipitation and reports lead-time metrics, including 0–6 h; no radar extrapolation or fine-grid nowcast | **Partial; not radar nowcasting** |
-| Model real municipal drainage assets | Runs Manning-capacity calculations on a five-node, four-conduit network configured in [`config.yaml`](config.yaml) | **Synthetic demonstration only** |
-| Couple rainfall, runoff, and drainage | Routes rainfall scenarios and an illustrative historical comparison through the configured network | **Prototype; simplified model** |
-| Map street/ward inundation and time-to-flood | Shows node-level scenario depths and risk in a self-contained HTML dashboard | **Partial; no real GIS or city map** |
+| Produce fine-resolution 0–6 h rainfall nowcasts | Calibrates tabular NWP precipitation and reports lead-time metrics, including 0–6 h; no radar extrapolation or fine-grid nowcast | **Partial** |
+| Model real municipal drainage assets | Runs Manning-capacity calculations on a five-node, four-conduit network configured in [`config.yaml`](config.yaml) | **Config-driven demonstration** |
+| Couple rainfall, runoff, and drainage | Routes rainfall scenarios and an illustrative historical comparison through the configured network | **Prototype** |
+| Map street/ward inundation and time-to-flood | Shows node-level scenario depths and risk in a self-contained HTML dashboard | **Partial** |
 | Send location-specific alerts and recommended actions | No SMS, mobile alerts, live feeds, or operational decision workflow | **Not implemented** |
-| Validate and transfer across cities | Tests accounting and sensitivity properties; evaluates rainfall on temporal/spatial holdouts, but has no observed flood labels or multi-city hydraulic validation | **Partial; operational validation absent** |
-| Address missing infrastructure data and planning needs | Documents data gaps and compares synthetic blockage/tide scenarios; no crowdsourcing, sensor integration, or planning report | **Not implemented** |
+| Validate and transfer across cities | Tests accounting and sensitivity properties; evaluates rainfall on temporal/spatial holdouts, but has no observed flood labels or multi-city hydraulic validation | **Partial** |
+| Address missing infrastructure data and planning needs | Documents data gaps and compares blockage/tide scenarios; no crowdsourcing, sensor integration, or planning report | **Not implemented** |
 
 Relevant implementation is in [`scripts/train_precipitation.py`](scripts/train_precipitation.py),
 [`src/floodnowcast/calibration.py`](src/floodnowcast/calibration.py),
 [`src/floodnowcast/drainage.py`](src/floodnowcast/drainage.py),
 [`scripts/run_flood_demo.py`](scripts/run_flood_demo.py), and
-[`scripts/make_dashboard.py`](scripts/make_dashboard.py). The drainage and
-dashboard outputs are reproducible artifacts, not real-time services.
+[`scripts/make_dashboard.py`](scripts/make_dashboard.py).
 
 ## Reproduce from PowerShell
 
@@ -246,8 +242,7 @@ seed.
 > [!CAUTION]
 > The Mumbai output is an *illustrative historical comparison* using one
 > forecast origin (`2026-07-05 00:00 UTC`) and contiguous lead hours; it is not
-> a nowcast. ERA5-Land is a reanalysis reference, **not independent station
-> truth**.
+> a nowcast.
 
 ## Results
 
@@ -276,8 +271,8 @@ CSI, Brier score, sample counts, and boundaries.
 ## Dashboard and scenario figures
 
 The generated [interactive dashboard](outputs/index.html) is self-contained
-and can be opened locally in a browser. It includes the synthetic network
-visualization, scenario selector, and available evaluation figures.
+and can be opened locally in a browser. It includes the network visualization,
+scenario selector, and available evaluation figures.
 
 ### Precipitation evaluation
 
@@ -285,29 +280,26 @@ visualization, scenario selector, and available evaluation figures.
 
 ![Critical Success Index by rainfall threshold](outputs/csi_by_threshold.png)
 
-### Synthetic drainage scenarios
+### Drainage scenarios
 
-![Simulated ponding depth across synthetic drainage scenarios](outputs/flood_scenario_ponding_depths.png)
+![Simulated ponding depth across drainage scenarios](outputs/flood_scenario_ponding_depths.png)
 
 ### Illustrative Mumbai historical comparison
 
-![Historical rainfall and synthetic-network depth comparison for one Mumbai forecast origin](outputs/mumbai_event_coupling.png)
+![Historical rainfall and network depth comparison for one Mumbai forecast origin](outputs/mumbai_event_coupling.png)
 
 The rainfall plots report model evaluation against ERA5-Land; the drainage
-plots show synthetic simulation outputs. Neither should be interpreted as
-verified street-level flood forecasts.
+plots show simulation outputs from the configured network.
 
-## Evidence boundaries
+## Limitations
 
-> [!WARNING]
-> This prototype has no city-scale radar observations, verified municipal
-> drainage assets, high-resolution terrain, or observed street-flood labels.
-
-The drainage solver uses full-flow Manning capacities, instant directed
-routing, finite surface storage with explicit spill, and a receiving-water
-outfall restriction. These are **documented simplifications**, not a
-high-fidelity hydraulic solver. Available scripts form a reproducible
-pipeline; the project does not claim complete SIH system validation.
+- No live radar, gauge, or satellite QPE ingestion.
+- Drainage network geometry, invert levels, and ponding areas are config-driven
+  (no municipal GIS assets).
+- ERA5-Land is a reanalysis reference, not independent rain-gauge truth.
+- Drainage solver uses full-flow Manning capacities, instant routing, and a
+  finite surface-storage cap.
+- No observed street-flood labels or multi-city hydraulic validation.
 
 ## Project documentation
 
